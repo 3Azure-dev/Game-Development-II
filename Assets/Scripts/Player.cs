@@ -1,16 +1,20 @@
 using UnityEngine;
 using System.Collections;
+using DesignPatterns.StatePattern;
 
 
 public class Player : MonoBehaviour
 {
-    private Rigidbody2D rb;
-    private Animator animator;
+    // public so the state objects (which live outside this class) can read them
+    public Rigidbody2D rb;
+    public Animator anim;
     private SpriteRenderer spriteRenderer;
+
+    public SimplePlayerStateMachine sm;
 
     [Header("Movement")]
     public float speed = 5f;
-    public float jumpForce = 7f;
+    public float jumpSpeed = 7f;
 
     [Header("Jump Settings")]
     public Transform groundCheck;
@@ -25,7 +29,7 @@ public class Player : MonoBehaviour
         get { return _currentHealth; }
     }
 
-    private bool isGrounded;
+    public bool isGrounded;
     private int count;
     public int Count { get 
     { 
@@ -42,20 +46,23 @@ public class Player : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
+        anim = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         Debug.Log("After Coroutine");
         coinPool  = FindAnyObjectByType<CoinManagerPool>();
 
         _currentHealth = maxHealth;
+
+        // build the FSM and start in Idle
+        sm = new SimplePlayerStateMachine(this);
+        sm.Initialize(sm.idleState);
     }
 
     void Update()
     {
-        if (Input.GetButtonDown("Jump") && isGrounded)
-        {
-            rb.linearVelocityY = jumpForce;
-        }
+        // the state machine now owns movement + jumping
+        sm.Execute();
+
         if (Input.GetKeyDown(KeyCode.F)) {
             SpawnCoinAhead();
         }
@@ -67,16 +74,15 @@ public class Player : MonoBehaviour
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
+        // the states drive the Rigidbody now; this only reads input
+        // for the animator params and sprite facing
         float moveHorizontal = Input.GetAxisRaw("Horizontal");
 
-        Vector2 movement = new Vector2(moveHorizontal * speed, rb.linearVelocity.y);
-        rb.linearVelocity = movement;
-
-        if (animator != null)
+        if (anim != null)
         {
-            animator.SetBool("isGrounded", isGrounded);
-            animator.SetFloat("Speed", Mathf.Abs(moveHorizontal));
-            animator.SetFloat("yVelocity", rb.linearVelocity.y);
+            anim.SetBool("isGrounded", isGrounded);
+            anim.SetFloat("Speed", Mathf.Abs(moveHorizontal));
+            anim.SetFloat("yVelocity", rb.linearVelocity.y);
         }
 
         if (spriteRenderer != null)
