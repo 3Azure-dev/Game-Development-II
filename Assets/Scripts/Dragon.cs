@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class Dragon : MonoBehaviour, IEnemy
 {
@@ -7,12 +8,23 @@ public class Dragon : MonoBehaviour, IEnemy
     public int damage = 10;
     public float attackCooldown = 2f;
 
+    private float baseSpeed;
+
     [Header("Animation")]
     public Animator animator;
     public string attackTrigger = "Attack";
 
     private Player player;
+
+    [Header("Attack Properties")]
     private float lastAttackTime = -999f;
+
+    public float attackRange = 1.5f;
+
+    [Header("Health attributes")]
+    public int maxHealth = 35;
+    private int currentHealth;
+    private bool isDead = false;
 
     void Start()
     {
@@ -20,12 +32,16 @@ public class Dragon : MonoBehaviour, IEnemy
 
         if (animator == null)
             animator = GetComponent<Animator>();
-    }
 
-public float attackRange = 1.5f;
+        currentHealth = maxHealth;
+
+        baseSpeed = speed;
+    }
 
 void Update()
 {
+    if (isDead) return;
+
     if (player == null) return;
 
     Vector3 target = player.transform.position + new Vector3(0, yOffset, 0);
@@ -77,4 +93,39 @@ void Update()
         Attack();
     }
 }
+
+
+
+    public void TakeDamage(int amount)
+    {
+        if (isDead) return;
+
+        currentHealth -= amount;
+
+        if (animator != null)
+            animator.SetTrigger("Hurt");
+
+        if (currentHealth <= 0)
+            Die();
+
+        StartCoroutine(SlowFromHurt());
+    }
+
+    IEnumerator SlowFromHurt()
+    {
+        speed = baseSpeed * 0.3f;
+        yield return new WaitForSeconds(0.5f);
+        speed = baseSpeed;
+    }
+
+    void Die()
+    {
+        isDead = true;
+
+        if (animator != null)
+            animator.SetTrigger("Die");
+
+        ScoreManager.Instance.EnemyDefeated();
+        Destroy(gameObject, 1f); // 1 second delay so the death animation gets to play before it disappears
+    }
 }

@@ -11,6 +11,8 @@ public class ScoreManager : MonoBehaviour
     public int Count => count;
     public int HighScore => highScore;
 
+    private int enemyCount;
+    public int EnemyCount => enemyCount;
     void Awake()
     {
         if (Instance == null)
@@ -34,11 +36,40 @@ public class ScoreManager : MonoBehaviour
             PlayerPrefs.SetInt("HighScore", highScore);
             PlayerPrefs.Save();
         }
+
+        if (count % 5 == 0)
+            {
+                Player p = FindAnyObjectByType<Player>();
+                if (p != null)
+                    p.IncreasestartHealth(20);
+            }   
         return count;
     }
 
     public void LoadScene()
     {
         SceneManager.LoadScene(1);
+    }
+
+    public void EnemySpawned()
+    {
+        enemyCount++;
+    }
+    public void EnemyDefeated()
+    {
+        enemyCount--;
+    }
+
+    public void ResetScore()
+    {
+        count = 0;
+        enemyCount = 0;
+    }
+
+    public void ResetHighScore()
+    {
+        highScore = 0;
+        PlayerPrefs.SetInt("HighScore", 0);
+        PlayerPrefs.Save();
     }
 }

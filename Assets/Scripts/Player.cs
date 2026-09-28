@@ -12,6 +12,11 @@ public class Player : MonoBehaviour
 
     public SimplePlayerStateMachine sm;
 
+    public static event System.Action OnPlayerDied;
+
+    private Vector3 spawnPosition;
+    private int startingMaxHealth;
+
     [Header("Movement")]
     public float speed = 5f;
     public float jumpSpeed = 7f;
@@ -22,52 +27,53 @@ public class Player : MonoBehaviour
     public LayerMask groundLayer;
 
     [Header("Health")]
-    public int maxHealth = 100;
+    public int startHealth = 100;
     private int _currentHealth;
+
+    public const int AbsoluteMaxHealth = 100;
     public int currentHealth 
     {
         get { return _currentHealth; }
     }
 
+    private bool isDead = false;
+
+    [Header("Shooting")]
+    private BulletPool bulletPool;
+    public float attackCooldown = 1.5f;
+    private float lastAttackTime = -999f;
+
+    [Header("Sounds")]
+
+    public AudioSource sfxSource;
+    public AudioClip hurtSound;
+    public AudioClip deathSound;
+
     public bool isGrounded;
-    private int count;
-    public int Count { get 
-    { 
-        return count; 
-    }
-    set
-        {
-            count = value;
-        }
-    }
-    private CoinManagerPool coinPool;
-    public float coinSpawnDistance = 2f;
-    public GameObject coinPrefab;
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         Debug.Log("After Coroutine");
-        coinPool  = FindAnyObjectByType<CoinManagerPool>();
 
-        _currentHealth = maxHealth;
+        _currentHealth = startHealth;
 
         // build the FSM and start in Idle
         sm = new SimplePlayerStateMachine(this);
         sm.Initialize(sm.idleState);
+
+        bulletPool = FindAnyObjectByType<BulletPool>();
     }
 
     void Update()
     {
-        // the state machine now owns movement + jumping
+        // the state machine now owns movement + jumping + shoot
         sm.Execute();
 
-        if (Input.GetKeyDown(KeyCode.F)) {
-            SpawnCoinAhead();
-        }
+     // Debug.Log(_currentHealth);
 
-        Debug.Log(_currentHealth);
+        
     }
 
     void FixedUpdate()
@@ -92,31 +98,6 @@ public class Player : MonoBehaviour
         }
     }
 
-    IEnumerator Counter()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(1f);
-            Count++;
-            Debug.Log("Count: " + Count);
-        }
-    }
-
-    public void StartCounterCoroutine()
-    {
-        StartCoroutine(Counter());
-    }
-
-    void SpawnCoinAhead()
-    {
-        if (coinPool != null)
-        {
-            float direction = spriteRenderer.flipX ? -1f : 1f;
-            Vector3 spawnPos = transform.position + new Vector3(direction * coinSpawnDistance, 0, 0);
-            Instantiate(coinPrefab, spawnPos, Quaternion.identity);
-        }
-    }
-
     public void TakeDamage(int damageAmount)
     {
         _currentHealth -= damageAmount;
@@ -126,10 +107,55 @@ public class Player : MonoBehaviour
             _currentHealth = 0;
             Die();
         }
+        else
+        {
+            if (sfxSource != null && hurtSound != null)
+                sfxSource.PlayOneShot(hurtSound);
+        }
     }
 
     void Die()
     {
+        if (isDead) return;
+        isDead = true;
+
+        if (deathSound != null) AudioSource.PlayClipAtPoint(deathSound, transform.position);
+
+        OnPlayerDied?.Invoke();
+
         gameObject.SetActive(false);
+    }
+
+public bool CanAttack()
+{
+    return Time.time - lastAttackTime >= attackCooldown;
+}
+
+public void Fire(Vector2 direction)
+{
+    lastAttackTime = Time.time;
+    bulletPool.FireBullet(transform.position, direction);
+}
+    public void IncreasestartHealth(int amount)
+    {
+            startHealth += amount;
+        if (startHealth > AbsoluteMaxHealth) startHealth = AbsoluteMaxHealth;
+
+        _currentHealth += amount;
+        if (_currentHealth > startHealth) _currentHealth = startHealth;
+    }
+
+    public void Respawn()
+    {
+        Debug.Log("Respawn called");
+        gameObject.SetActive(true);
+        transform.position = spawnPosition;
+        rb.linearVelocity = Vector2.zero;
+
+        isDead = false;
+        startHealth = startingMaxHealth;
+        _currentHealth = startHealth;
+
+        sm.Initialize(sm.idleState);
     }
 }

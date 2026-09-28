@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 7387924665119304333}
   m_Layer: 0
   m_Name: Bat_01
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -135,6 +135,7 @@ MonoBehaviour:
   attackCooldown: 2
   animator: {fileID: 2390658912160676592}
   attackTrigger: Attack
+  attackRange: 1.5
 --- !u!60 &7387924665119304333
 PolygonCollider2D:
   m_ObjectHideFlags: 0

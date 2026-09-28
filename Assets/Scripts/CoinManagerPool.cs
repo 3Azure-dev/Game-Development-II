@@ -10,44 +10,14 @@ public class CoinManagerPool : MonoBehaviour
     public GameObject coinPrefab;
     public int amountToPool = 3;
 
+    public AudioSource sfxSource;
+    public AudioClip coinSound;
+
     private ObjectPool<GameObject> coinPool; //ObjectPool is a generic class provided by Unity, gameobject is type
     private List<GameObject> activeCoins = new List<GameObject>();
 
-    Action<int> example; //delegate which points to a method
-
-Action exampleTwo;
-
-Func<int> exampleFunction;
-
-int exampleThree()
-        {
-            return 1;
-        }
-void ExampleTwo()
-        {
-            
-        }
-
-        void ExampleFour()
-        {
-            
-        }
-    void ActionExample(int a)
-    {
-        Debug.Log("Action called");
-    }
-
     private void Awake()
     {
-        example = ActionExample; //reference to function
-        exampleTwo += ExampleTwo;
-        exampleTwo += ExampleFour;
-        exampleFunction = exampleThree;
-
-        example.Invoke(1);
-        exampleTwo.Invoke();
-;
-
         //managing pool
         coinPool = new ObjectPool<GameObject>(
             CreateCoin, 
@@ -63,6 +33,9 @@ void ExampleTwo()
     private void Start()
     {
        StartCoroutine(PlaceCoin());
+       Coin sceneCoin = FindAnyObjectByType<Coin>();
+        if (sceneCoin != null)
+            sceneCoin.manager = this;
     }
 
     private IEnumerator PlaceCoin()
@@ -110,5 +83,24 @@ void ExampleTwo()
         if(count % 3 == 0)
         StartCoroutine(PlaceCoin());
         Debug.Log("Coins Left: " + activeCoins.Count);
+
+        if (sfxSource != null && coinSound != null)
+        sfxSource.PlayOneShot(coinSound);
+    }
+
+    void OnDisable()
+    {
+        Debug.Log("CoinManagerPool got disabled!");
+    }
+
+    public void ResetCoins()
+    {
+        foreach (GameObject coin in activeCoins)
+        {
+            coinPool.Release(coin);
+        }
+        activeCoins.Clear();
+
+        StartCoroutine(PlaceCoin());
     }
 }

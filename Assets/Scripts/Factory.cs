@@ -21,6 +21,7 @@ public class Factory : MonoBehaviour
             case EnemyType.EnemyEnum.Dragon:
                 spawned = Instantiate(dragonPrefab);
                 enemy = spawned.GetComponent<IEnemy>();
+                ApplyDragonDifficulty(spawned);
                 Debug.Log("Factory spawned a Dragon!");
                 break;
 
@@ -40,6 +41,19 @@ public class Factory : MonoBehaviour
                 Debug.LogError("Unknown enemy type: " + enemyType);
                 break;
         }
+    
+    if (spawned != null) ScoreManager.Instance.EnemySpawned();
+
     return enemy;
     }
+
+    void ApplyDragonDifficulty(GameObject spawned)
+{
+    Dragon dragon = spawned.GetComponent<Dragon>();
+    if (dragon == null) return;
+
+    int tier = ScoreManager.Instance.Count / 5; // 0-4 coins = tier 0, 5-9 = tier 1, etc, uncapped
+    dragon.maxHealth += tier * 10;
+    dragon.speed += tier * 0.5f;
+}
 }

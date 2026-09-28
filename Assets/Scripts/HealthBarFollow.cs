@@ -10,8 +10,10 @@ public class HealthBarFollow : MonoBehaviour
     [Header("Health Bar")]
     public Slider healthSlider;             // The UI Slider showing health
 
-    private int maxHealth;                  // Cache max health
+    private int startHealth;                  // Cache max health
     private Player playerRef;               // Reference to the player (for health reading)
+
+    public TMPro.TextMeshProUGUI healthText;
 
     void Start()
     {
@@ -24,14 +26,14 @@ public class HealthBarFollow : MonoBehaviour
 
         if (playerRef != null)
         {
-            maxHealth = playerRef.maxHealth;
+            startHealth = playerRef.startHealth;
         }
 
         // Initialize slider
         if (healthSlider != null)
         {
-            healthSlider.maxValue = maxHealth;
-            healthSlider.value = maxHealth;
+            healthSlider.maxValue = startHealth;
+            healthSlider.value = startHealth;
         }
     }
 
@@ -46,7 +48,11 @@ public class HealthBarFollow : MonoBehaviour
         // 2. Update the health slider fill
         if (healthSlider != null && playerRef != null)
         {
-            healthSlider.value = playerRef.currentHealth;
+            healthSlider.maxValue = Player.AbsoluteMaxHealth;  // fixed ceiling, not the growing current max
+            healthSlider.value = playerRef.currentHealth;           
         }
+
+        if (healthText != null && playerRef != null)
+        healthText.text = playerRef.currentHealth + " / " + playerRef.startHealth;
     }
 }

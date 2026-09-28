@@ -33,8 +33,14 @@ namespace DesignPatterns.StatePattern
             }
 
             float moveValue = Input.GetAxis("Horizontal");
-            if (Mathf.Abs(moveValue) > 0.01f)
-                player.sm.TransitionTo(player.sm.walkState);
+
+            if (Mathf.Abs(moveValue) > 0.01f) player.sm.TransitionTo(player.sm.walkState);
+
+            if (Input.GetMouseButtonDown(0) && player.CanAttack())
+            {
+                player.sm.TransitionTo(player.sm.attackState);
+                return;
+            }
         }
 
         public void Exit()

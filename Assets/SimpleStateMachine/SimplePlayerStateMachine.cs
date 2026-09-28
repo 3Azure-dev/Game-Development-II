@@ -12,9 +12,12 @@ namespace DesignPatterns.StatePattern
         public IState CurrentState { get; private set; }
 
         // reference to the state objects
+        [HideInInspector]
         public WalkState walkState;
         public JumpState jumpState;
         public IdleState idleState;
+
+        public AttackState attackState;
 
         // event to notify other objects of the state change
         public event Action<IState> stateChanged;
@@ -26,6 +29,7 @@ namespace DesignPatterns.StatePattern
             this.walkState = new WalkState(player);
             this.jumpState = new JumpState(player);
             this.idleState = new IdleState(player);
+            this.attackState = new AttackState(player);
         }
 
         // set the starting state
@@ -55,7 +59,7 @@ namespace DesignPatterns.StatePattern
             if (CurrentState != null)
             {
                 CurrentState.Execute();
-                Debug.Log("Current State: " + CurrentState);
+               // Debug.Log("Current State: " + CurrentState);
             }
         }
     }
